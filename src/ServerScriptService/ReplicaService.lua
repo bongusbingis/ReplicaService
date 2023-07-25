@@ -424,6 +424,31 @@ function Replica:SetValue(path, value)
 	end
 end
 
+function Replica:Increment(path, number) -- Will be received under :ListenToChange() on client - for incrementing number values in replica data
+	assert(type(number) == "number", "[ReplicaService]: Must provide a valid number to increment value")
+	local path_array = (type(path) == "string") and StringPathToArray(path) or path
+	-- Apply change server-side:
+	local pointer = self.Data
+	for i = 1, #path_array - 1 do
+		pointer = pointer[path_array[i]]
+	end
+	assert(type(pointer[path_array[#path_array]]) == "number", "[ReplicaService]: Replica value must be a number in order to increment")
+	pointer[path_array[#path_array]] += number
+	-- Replicate change:
+	if WriteFunctionFlag == false then
+		local id = self.Id
+		if self._replication["All"] == true then
+			for player in pairs(ActivePlayers) do
+				rev_ReplicaSetValue:FireClient(player, id, path_array, pointer[path_array[#path_array]])
+			end
+		else
+			for player in pairs(self._replication) do
+				rev_ReplicaSetValue:FireClient(player, id, path_array, pointer[path_array[#path_array]])
+			end
+		end
+	end
+end
+
 function Replica:SetValues(path, values)
 	local path_array = (type(path) == "string") and StringPathToArray(path) or path
 	-- Apply change server-side:
