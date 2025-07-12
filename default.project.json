@@ -1,6 +1,5 @@
 {
 	"name": "ReplicaService",
-	"servePlaceIds": null,
 	"tree": {
 		"$path": "src"
  	}
